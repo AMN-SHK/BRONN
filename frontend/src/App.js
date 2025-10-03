@@ -1,15 +1,23 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import './App.css';
-import FeatureCard from './components/FeatureCard';
 import ChatPage from './components/ChatPage';
-import RecentChats from './components/RecentChats';
-import feature1 from './imgs/feature1.png';
-import feature2 from './imgs/feature2.png';
-import feature3 from './imgs/feature3.png';
 import avatar from './imgs/avatar.png';
-import { IoChevronBack, IoChevronForward } from "react-icons/io5";
-import { FaPaperPlane } from "react-icons/fa6";
-import { NextUIProvider, ScrollShadow } from "@nextui-org/react";
+import { 
+  IoChevronBack, 
+  IoMenuOutline, 
+  IoCloseOutline,
+  IoAddOutline,
+  IoChatbubbleEllipsesOutline,
+  IoTrashOutline
+} from "react-icons/io5";
+import { 
+  FaPaperPlane, 
+  FaChartLine, 
+  FaNewspaper, 
+  FaBriefcase, 
+  FaLightbulb,
+  FaRobot
+} from "react-icons/fa6";
 
 
 function App() {
@@ -17,28 +25,29 @@ function App() {
   const [isInChatView, setIsInChatView] = useState(false);
   const [currentChatId, setCurrentChatId] = useState(null);
   const [message, setMessage] = useState('');
-  const carouselRef = useRef(null);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   
   const promptSuggestions = [
-    "Get fresh perspectives on tricky problems",
-    "Predict the stock price of AAPL for next week",
-    "What are the latest news affecting TSLA?",
-    "Analyze my portfolio and suggest improvements"
+    { 
+      text: "Get fresh perspectives on tricky problems", 
+      icon: <FaLightbulb /> 
+    },
+    { 
+      text: "Predict the stock price of AAPL for next week", 
+      icon: <FaChartLine /> 
+    },
+    { 
+      text: "What are the latest news affecting TSLA?", 
+      icon: <FaNewspaper /> 
+    },
+    { 
+      text: "Analyze my portfolio and suggest improvements", 
+      icon: <FaBriefcase /> 
+    }
   ];
 
-  const featurePrompts = {
-    "Stock Predictions": "Predict the stock price of [STOCK] for next week",
-    "Realtime News": "What are the latest news affecting [STOCK]?",
-    "Portfolio Analysis": "Analyze my portfolio consisting of [STOCKS]"
-  };
-
   const handlePromptClick = (prompt) => {
-    setMessage(prompt);
-  };
-
-  const handleCtaClick = (featureTitle) => {
-    const prompt = featurePrompts[featureTitle];
     setMessage(prompt);
   };
 
@@ -66,13 +75,6 @@ function App() {
   useEffect(() => {
     localStorage.setItem('recentChats', JSON.stringify(recentChats));
   }, [recentChats]);
-
-  const scrollCarousel = (direction) => {
-    if (carouselRef.current) {
-      const scrollAmount = direction === 'left' ? -300 : 300;
-      carouselRef.current.scrollBy({ left: scrollAmount, behavior: 'smooth' });
-    }
-  };
 
   const handleSendMessage = async (message) => {
     const newMessage = { role: 'user', content: message };
@@ -137,22 +139,33 @@ function App() {
       setIsGenerating(false);
     }
   };
-
-  
-
   const startNewChat = () => {
-    setIsInChatView(true);
+    setIsInChatView(false);
     setCurrentChatId(null);
+    setIsSidebarOpen(false);
   };
 
   const openExistingChat = (chatId) => {
     setIsInChatView(true);
     setCurrentChatId(chatId);
+    setIsSidebarOpen(false);
   };
 
   const goBack = () => {
     setIsInChatView(false);
     setCurrentChatId(null);
+  };
+
+  const deleteChat = (chatId, e) => {
+    e.stopPropagation();
+    setRecentChats(chats => chats.filter(chat => chat.id !== chatId));
+    if (currentChatId === chatId) {
+      goBack();
+    }
+  };
+
+  const toggleSidebar = () => {
+    setIsSidebarOpen(!isSidebarOpen);
   };
 
   useEffect(() => {
@@ -183,101 +196,127 @@ function App() {
   };
 
   return (
-    <NextUIProvider>
     <div className="app">
-      <header>
-        <div className="header-left">
-          {isInChatView && (
-            <button className="back-btn" onClick={goBack}>
-              <IoChevronBack />
-            </button>
-          )}
-          <h1 className='quattrocento-bold'>BRONN</h1>
+      {/* Sidebar */}
+      <div className={`sidebar ${isSidebarOpen ? 'open' : ''}`}>
+        <div className="sidebar-header">
+          <button className="new-chat-btn" onClick={startNewChat}>
+            <IoAddOutline />
+            <span>New Chat</span>
+          </button>
+          <button className="close-sidebar-btn" onClick={toggleSidebar}>
+            <IoCloseOutline />
+          </button>
         </div>
-        <div className="user-avatar">M</div>
-      </header>
-      
-      {!isInChatView ? (
-        <div className="landing-page">
-          <div className="gradient-orb"></div>
-          
-          <div className="welcome-section">
-            <h2 className="greeting">{getGreeting()}, Milovan</h2>
-            <h1 className="main-heading">Can I help you with anything?</h1>
-            <p className="subtitle">Choose a prompt below or write your own to start chatting with BRONN</p>
-          </div>
-
-          <div className="prompt-suggestions">
-            {promptSuggestions.map((prompt, index) => (
-              <button 
-                key={index} 
-                className="prompt-pill"
-                onClick={() => handlePromptClick(prompt)}
-              >
-                {prompt}
-              </button>
-            ))}
-          </div>
-
-          <ScrollShadow className="content-scroll" hideScrollBar>
-            <section className="features">
-              <h2 className='quattrocento-bold'>Features</h2>
-              <div className="feature-carousel-container">
-                <button className="carousel-btn prev-btn" onClick={() => scrollCarousel('left')}><IoChevronBack /></button>
-                <div className="feature-carousel" ref={carouselRef}>
-                <FeatureCard 
-                  title="Stock Predictions" 
-                  content="Predict your favorite stocks with a prompt" 
-                  imageUrl={feature1}
-                  ctaText="Predict Now"
-                  onCtaClick={handleCtaClick}
-                />
-                <FeatureCard 
-                  title="Realtime News" 
-                  content="Get Realtime updates on your stocks 24/7" 
-                  imageUrl={feature2}
-                  ctaText="View News"
-                  onCtaClick={handleCtaClick}
-                />
-                <FeatureCard 
-                  title="Portfolio Analysis" 
-                  content="Get insights on your investment portfolio" 
-                  imageUrl={feature3}
-                  ctaText="Analyze Now"
-                  onCtaClick={handleCtaClick}
-                />
+        
+        <div className="sidebar-content">
+          <h3 className="sidebar-title">Recent Chats</h3>
+          {recentChats.length === 0 ? (
+            <div className="empty-chats">
+              <IoChatbubbleEllipsesOutline />
+              <p>No chats yet</p>
+            </div>
+          ) : (
+            <div className="chats-list">
+              {recentChats.map(chat => (
+                <div 
+                  key={chat.id} 
+                  className={`chat-item ${currentChatId === chat.id ? 'active' : ''}`}
+                  onClick={() => openExistingChat(chat.id)}
+                >
+                  <div className="chat-item-content">
+                    <IoChatbubbleEllipsesOutline className="chat-icon" />
+                    <span className="chat-title">{chat.title}</span>
+                  </div>
+                  <button 
+                    className="delete-chat-btn"
+                    onClick={(e) => deleteChat(chat.id, e)}
+                    title="Delete chat"
+                  >
+                    <IoTrashOutline />
+                  </button>
                 </div>
-                <button className="carousel-btn next-btn" onClick={() => scrollCarousel('right')}><IoChevronForward /></button>
-              </div>
-            </section>
-            
-            <RecentChats 
-              chats={recentChats} 
-              onChatClick={openExistingChat}
-            />
-          </ScrollShadow>
+              ))}
+            </div>
+          )}
         </div>
-      ) : (
-        <ChatPage 
-        chat={recentChats.find(chat => chat.id === currentChatId) || { messages: [], title: '' }} 
-        onTitleChange={handleTitleChange}
-        isGenerating={isGenerating}
-      />
+      </div>
+
+      {/* Sidebar Overlay */}
+      {isSidebarOpen && (
+        <div className="sidebar-overlay" onClick={toggleSidebar}></div>
       )}
-      
-      <footer>
-        <form onSubmit={handleSubmit} className="input-form">
-          <input
-            type="text"
-            value={message}
-            onChange={(e) => setMessage(e.target.value)}
-            placeholder="How can BRONN help you today?"
+
+      {/* Main Content */}
+      <div className="main-content">
+        <header>
+          <div className="header-left">
+            <button className="sidebar-toggle-btn" onClick={toggleSidebar}>
+              <IoMenuOutline />
+            </button>
+            {isInChatView && (
+              <button className="back-btn" onClick={goBack}>
+                <IoChevronBack />
+              </button>
+            )}
+            <div className="brand">
+              <FaRobot className="brand-icon" />
+              <h1 className='quattrocento-bold'>BRONN</h1>
+            </div>
+          </div>
+        </header>
+        
+        {!isInChatView ? (
+          <div className="landing-page">
+            <div className="gradient-orb"></div>
+            
+            <div className="welcome-section">
+              <h2 className="greeting">{getGreeting()}, Traveller</h2>
+              <h1 className="main-heading">Can I help you with anything?</h1>
+              <p className="subtitle">Choose a prompt below or write your own to start chatting with BRONN</p>
+            </div>
+
+            <div className="prompt-suggestions">
+              {promptSuggestions.map((suggestion, index) => (
+                <button 
+                  key={index} 
+                  className="prompt-chip"
+                  onClick={() => handlePromptClick(suggestion.text)}
+                >
+                  <span className="chip-icon">{suggestion.icon}</span>
+                  <span className="chip-text">{suggestion.text}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        ) : (
+          <ChatPage 
+            chat={recentChats.find(chat => chat.id === currentChatId) || { messages: [], title: '' }} 
+            onTitleChange={handleTitleChange}
+            isGenerating={isGenerating}
           />
-          <button type="submit" disabled={!message.trim()}><FaPaperPlane /></button>
-        </form>
-      </footer>
+        )}
+        
+        <footer>
+          <form onSubmit={handleSubmit} className="input-form">
+            <input
+              type="text"
+              value={message}
+              onChange={(e) => setMessage(e.target.value)}
+              placeholder="Ask BRONN anything..."
+              autoComplete="off"
+            />
+            <button 
+              type="submit" 
+              disabled={!message.trim() || isGenerating}
+              className="send-btn"
+            >
+              <FaPaperPlane />
+            </button>
+          </form>
+        </footer>
+      </div>
     </div>
-    </NextUIProvider>
   );
 }
 

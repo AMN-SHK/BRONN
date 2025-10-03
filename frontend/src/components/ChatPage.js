@@ -1,10 +1,8 @@
-import React from 'react';
+import React, { useRef, useEffect } from 'react';
 import avatar from '../imgs/avatar.png';
 import PredictionChart from './PredictionChart';
 import ReactMarkdown from 'react-markdown';
 import { FaArrowTrendUp, FaArrowTrendDown } from "react-icons/fa6";
-import { Input, ScrollShadow } from "@nextui-org/react";
-import { useRef, useEffect } from 'react';
 
 function ChatPage({ chat, onTitleChange, isGenerating }) {
 
@@ -143,19 +141,22 @@ function ChatPage({ chat, onTitleChange, isGenerating }) {
 
   return (
     <div className="chat-page">
-      <Input
-        value={chat.title}
-        onChange={handleTitleChange}
-        placeholder="Chat Title"
-        className="mb-4"
-      />
-      <ScrollShadow className="h-[calc(100vh-200px)] w-full" hideScrollBar>
+      <div className="chat-header">
+        <input
+          type="text"
+          value={chat.title}
+          onChange={handleTitleChange}
+          placeholder="Chat Title"
+          className="chat-title-input"
+        />
+      </div>
+      <div className="messages-container">
         <div className="messages">
           {chat.messages.map((msg, index) => renderMessage(msg, index))}
           {isGenerating && <Loader />}
           <div ref={messagesEndRef} />
         </div>
-      </ScrollShadow>
+      </div>
     </div>
   );
 }
