@@ -9,25 +9,44 @@ import feature3 from './imgs/feature3.png';
 import avatar from './imgs/avatar.png';
 import { IoChevronBack, IoChevronForward } from "react-icons/io5";
 import { FaPaperPlane } from "react-icons/fa6";
+import { NextUIProvider, ScrollShadow } from "@nextui-org/react";
+
 
 function App() {
   const [recentChats, setRecentChats] = useState([]);
   const [isInChatView, setIsInChatView] = useState(false);
   const [currentChatId, setCurrentChatId] = useState(null);
-  const [isLoading, setIsLoading] = useState(false);
   const [message, setMessage] = useState('');
   const carouselRef = useRef(null);
   const [isGenerating, setIsGenerating] = useState(false);
   
+  const promptSuggestions = [
+    "Get fresh perspectives on tricky problems",
+    "Predict the stock price of AAPL for next week",
+    "What are the latest news affecting TSLA?",
+    "Analyze my portfolio and suggest improvements"
+  ];
+
   const featurePrompts = {
     "Stock Predictions": "Predict the stock price of [STOCK] for next week",
     "Realtime News": "What are the latest news affecting [STOCK]?",
     "Portfolio Analysis": "Analyze my portfolio consisting of [STOCKS]"
   };
 
+  const handlePromptClick = (prompt) => {
+    setMessage(prompt);
+  };
+
   const handleCtaClick = (featureTitle) => {
     const prompt = featurePrompts[featureTitle];
     setMessage(prompt);
+  };
+
+  const getGreeting = () => {
+    const hour = new Date().getHours();
+    if (hour < 12) return "Good morning";
+    if (hour < 18) return "Good afternoon";
+    return "Good evening";
   };
 
   useEffect(() => {
@@ -79,7 +98,7 @@ function App() {
     setIsGenerating(true);
   
     try {
-      const response = await fetch('http://localhost:8000/bronn', {
+      const response = await fetch('https://yameenv--bronn-fintech-app-fastapi-app.modal.run/bronn', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -136,13 +155,13 @@ function App() {
     setCurrentChatId(null);
   };
 
-  const handlePopState = () => {
-    if (isInChatView) {
-      goBack();
-    }
-  };
-
   useEffect(() => {
+    const handlePopState = () => {
+      if (isInChatView) {
+        goBack();
+      }
+    };
+
     window.addEventListener('popstate', handlePopState);
     return () => window.removeEventListener('popstate', handlePopState);
   }, [isInChatView]);
@@ -164,58 +183,86 @@ function App() {
   };
 
   return (
+    <NextUIProvider>
     <div className="app">
       <header>
-        <h1 className='quattrocento-bold'>BRONN</h1>
-        {!isInChatView && <p>Your Own Master of Coin</p>}
-        {isInChatView && <button onClick={goBack}>{<IoChevronBack />}</button>}
-        {/* <p>{isInChatView ? (recentChats.find(chat => chat.id === currentChatId)?.title || "New Chat") : "Your Own Master of Coin"}</p> */}
+        <div className="header-left">
+          {isInChatView && (
+            <button className="back-btn" onClick={goBack}>
+              <IoChevronBack />
+            </button>
+          )}
+          <h1 className='quattrocento-bold'>BRONN</h1>
+        </div>
+        <div className="user-avatar">M</div>
       </header>
       
       {!isInChatView ? (
-        <>
-          <section className="features">
-            <h2 className='quattrocento-bold'>Features</h2>
-            <div className="feature-carousel-container">
-              <button className="carousel-btn prev-btn" onClick={() => scrollCarousel('left')}>{<IoChevronBack />}</button>
-              <div className="feature-carousel" ref={carouselRef}>
-              <FeatureCard 
-  title="Stock Predictions" 
-  content="Predict your favorite stocks with a prompt" 
-  imageUrl={feature1}
-  ctaText="Predict Now"
-  onCtaClick={handleCtaClick}
-/>
-<FeatureCard 
-  title="Realtime News" 
-  content="Get Realtime updates on your stocks 24/7" 
-  imageUrl={feature2}
-  ctaText="View News"
-  onCtaClick={handleCtaClick}
-/>
-<FeatureCard 
-  title="Portfolio Analysis" 
-  content="Get insights on your investment portfolio" 
-  imageUrl={feature3}
-  ctaText="Analyze Now"
-  onCtaClick={handleCtaClick}
-/>
-              </div>
-              <button className="carousel-btn next-btn" onClick={() => scrollCarousel('right')}>{<IoChevronForward />}</button>
-            </div>
-          </section>
+        <div className="landing-page">
+          <div className="gradient-orb"></div>
           
-          <RecentChats 
-            chats={recentChats} 
-            onChatClick={openExistingChat}
-          />
-        </>
+          <div className="welcome-section">
+            <h2 className="greeting">{getGreeting()}, Milovan</h2>
+            <h1 className="main-heading">Can I help you with anything?</h1>
+            <p className="subtitle">Choose a prompt below or write your own to start chatting with BRONN</p>
+          </div>
+
+          <div className="prompt-suggestions">
+            {promptSuggestions.map((prompt, index) => (
+              <button 
+                key={index} 
+                className="prompt-pill"
+                onClick={() => handlePromptClick(prompt)}
+              >
+                {prompt}
+              </button>
+            ))}
+          </div>
+
+          <ScrollShadow className="content-scroll" hideScrollBar>
+            <section className="features">
+              <h2 className='quattrocento-bold'>Features</h2>
+              <div className="feature-carousel-container">
+                <button className="carousel-btn prev-btn" onClick={() => scrollCarousel('left')}><IoChevronBack /></button>
+                <div className="feature-carousel" ref={carouselRef}>
+                <FeatureCard 
+                  title="Stock Predictions" 
+                  content="Predict your favorite stocks with a prompt" 
+                  imageUrl={feature1}
+                  ctaText="Predict Now"
+                  onCtaClick={handleCtaClick}
+                />
+                <FeatureCard 
+                  title="Realtime News" 
+                  content="Get Realtime updates on your stocks 24/7" 
+                  imageUrl={feature2}
+                  ctaText="View News"
+                  onCtaClick={handleCtaClick}
+                />
+                <FeatureCard 
+                  title="Portfolio Analysis" 
+                  content="Get insights on your investment portfolio" 
+                  imageUrl={feature3}
+                  ctaText="Analyze Now"
+                  onCtaClick={handleCtaClick}
+                />
+                </div>
+                <button className="carousel-btn next-btn" onClick={() => scrollCarousel('right')}><IoChevronForward /></button>
+              </div>
+            </section>
+            
+            <RecentChats 
+              chats={recentChats} 
+              onChatClick={openExistingChat}
+            />
+          </ScrollShadow>
+        </div>
       ) : (
         <ChatPage 
-          chat={recentChats.find(chat => chat.id === currentChatId) || { messages: [], title: '' }} 
-          onTitleChange={handleTitleChange}
-          isGenerating={isGenerating}
-        />
+        chat={recentChats.find(chat => chat.id === currentChatId) || { messages: [], title: '' }} 
+        onTitleChange={handleTitleChange}
+        isGenerating={isGenerating}
+      />
       )}
       
       <footer>
@@ -224,12 +271,13 @@ function App() {
             type="text"
             value={message}
             onChange={(e) => setMessage(e.target.value)}
-            placeholder="Type your message..."
+            placeholder="How can BRONN help you today?"
           />
-          <button type="submit">{<FaPaperPlane />}</button>
+          <button type="submit" disabled={!message.trim()}><FaPaperPlane /></button>
         </form>
       </footer>
     </div>
+    </NextUIProvider>
   );
 }
 
